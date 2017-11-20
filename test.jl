@@ -1,6 +1,8 @@
 Pkg.add("PyPlot")
 using PyPlot
 push!(LOAD_PATH, pwd())
+# Simple test for y=sin(x)
+
 include("tree.jl")
 
 

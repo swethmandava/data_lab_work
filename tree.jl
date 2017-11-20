@@ -21,8 +21,8 @@ function cart_score(groups)
 		if ni == 0
 			continue
 		end
-		mean = sum(group)/ni
-		score_i = (group - mean)
+		mean = sum(group, 1)/ni
+		score_i = broadcast(-, group, mean)
 		score += sum(score_i.*score_i)
 	end
 
@@ -51,8 +51,6 @@ function split(node, max_depth, min_size, depth)
 	nr, nm = size(right)
 	delete!(node, "groups")
 
-	# if nl == 0 & nr == 0
-	# 	node["left"] = to_terminal(left_y)
 	if depth >= max_depth
 		node["left"] = to_terminal(left_y)
 		node["right"] = to_terminal(right_y)
@@ -76,7 +74,7 @@ end
 
 function to_terminal(group)
 	ni = size(group)[1]
-	mean = sum(group)/ni
+	mean = sum(group, 1)/ni
 	return mean
 end
 
@@ -89,7 +87,6 @@ end
 function predict(X, model)
 	n, m = size(X)
 	Y = Array{Float64}(0)
-	# println(model)
 	for i = 1: n 
 		if X[i, model["index"]] < model["value"]
 			if isa(model["left"], Dict)
@@ -107,5 +104,3 @@ function predict(X, model)
 	end
 	return Y
 end
-
-# end
