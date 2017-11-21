@@ -1,3 +1,7 @@
+# Regression Trees Using Square Loss
+# Author : Swetha Mandava
+# Email : mmandava@andrew.cmu.edu
+
 function test_split(index, value, X, Y)
 	n, m = size(X)
 	left, right = Array{Float64}(0, m), Array{Float64}(0, m)
@@ -45,42 +49,44 @@ function get_split(X, Y)
 	return Dict("index"=>tree_index, "value"=>tree_value, "groups"=>tree_groups)
 end
 
-function split(node, max_depth, min_size, depth)
+function split(node, max_depth, min_size, depth, learning_rate)
 	(left, left_y), (right, right_y) = node["groups"]
 	nl, nm = size(left)
 	nr, nm = size(right)
 	delete!(node, "groups")
 
 	if depth >= max_depth
-		node["left"] = to_terminal(left_y)
-		node["right"] = to_terminal(right_y)
+		node["left"] = to_terminal(left_y, learning_rate)
+		node["right"] = to_terminal(right_y, learning_rate)
 		return node
 	end
 
 	if nl <= min_size
-		node["left"] = to_terminal(left_y)
+		node["left"] = to_terminal(left_y, learning_rate)
 	else 
 		node["left"] = get_split(left, left_y)
-		node["left"] = split(node["left"], max_depth, min_size, depth+1)
+		node["left"] = split(node["left"], max_depth, min_size,
+			depth+1, learning_rate)
 	end
 	if nr <= min_size
-		node["right"] = to_terminal(right_y)
+		node["right"] = to_terminal(right_y, learning_rate)
 	else 
 		node["right"] = get_split(right, right_y)
-		node["right"] = split(node["right"], max_depth, min_size, depth+1)
+		node["right"] = split(node["right"], max_depth, min_size,
+			depth+1, learning_rate)
 	end
 	return node
 end
 
-function to_terminal(group)
+function to_terminal(group, learning_rate)
 	ni = size(group)[1]
 	mean = sum(group, 1)/ni
-	return mean
+	return mean * learning_rate
 end
 
-function train(X, Y, max_depth, min_size)
+function train(X, Y, max_depth, min_size, learning_rate=1)
 	root = get_split(X, Y)
-	model = split(root, max_depth, min_size, 1)
+	model = split(root, max_depth, min_size, 1, learning_rate)
 	return model
 end
 
@@ -103,4 +109,10 @@ function predict(X, model)
 		end
 	end
 	return Y
+end
+
+#dummy tree that always returns given value
+function dummy_tree(value)
+	model = Dict("index"=>1, "value"=>Inf, "left"=>value)
+	return model
 end
