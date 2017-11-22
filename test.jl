@@ -2,8 +2,6 @@
 # Author : Swetha Mandava
 # Email : mmandava@andrew.cmu.edu
 
-
-
 Pkg.add("PyPlot")
 using PyPlot
 push!(LOAD_PATH, pwd())
@@ -52,10 +50,12 @@ function test_gradient_boosting()
 	max_depth = 2
 	min_size = 2
 	epochs = 500
-	learning_rate = 0.01
+	learning_rate = 0.1
 	batch_size = 10
+	lambda = 0.01
+	gamma = 0.01
 	model = gradient_boosting(x_train, y_train, epochs, learning_rate, batch_size,
-	max_depth, min_size)
+	max_depth, min_size, lambda, gamma)
 
 	y_test = predict_gboost(x_train, model)
 

@@ -6,8 +6,8 @@
 
 include("tree.jl")
 
-function gradient_boosting(X, Y, epochs, learning_rate, batch_size,
-	max_depth, min_size)
+function gradient_boosting(X, Y, epochs::Int64, learning_rate::Float64, batch_size::Int64,
+	max_depth::Int64, min_size::Int64, lambda::Float64, gamma::Float64)
 
 	F0 = to_terminal(Y, learning_rate)
 	model = dummy_tree(F0)
@@ -23,7 +23,7 @@ function gradient_boosting(X, Y, epochs, learning_rate, batch_size,
 		batch_x = X[1:batch_size, :]
 		batch_y = Y_residue[1:batch_size, :]
 
-		model = train(batch_x, batch_y, max_depth, min_size, learning_rate)
+		model = train(batch_x, batch_y, max_depth, min_size, lambda, gamma, learning_rate)
 		weak_learners[i] = model
 		Y_residue -= predict(X, model)
 	end
