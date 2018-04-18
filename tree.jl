@@ -2,54 +2,51 @@
 # Author : Swetha Mandava
 # Email : mmandava@andrew.cmu.edu
 
-function test_split(index::Int64, value, X, Y, lamda::Float64, gamma::Float64, num_samples::Int64, num_features::Int64)
-	left, right = Array{Float64}(0, num_features), Array{Float64}(0, num_features)
-	left_y, right_y = Array{Float64}(0), Array{Float64}(0)
-	G = sum(Y)
-	Gl = 0
-	H = num_samples
-	Hl = 0
-	for i in 1:num_samples
-		if X[i, index] < value
-			left = [left;  X[i, :]']
-			left_y = [left_y; Y[i]]
-			Gl += Y[i]
-			Hl += 1
-		else
-			right = [right; X[i, :]']
-			right_y = [right_y; Y[i]]
-		end
-	end
-	Gr = G - Gl
-	Hr = H - Hl
-	score = (Gl * Gl) / max(1, (Hl + lamda)) + (Gr * Gr) / max(1, (Hr + lamda)) - (G*G)/(H + lamda) - gamma
-	return left, left_y, right, right_y, score
-end
-
 function get_split(X, Y, lambda, gamma)
 	num_samples, num_features = size(X)
-	tree_index, tree_value, tree_score, tree_groups = Inf, Inf, -Inf, nothing
-	for i in 1:num_samples
-		for index in 1:num_features
-			left, left_y, right, right_y, score = test_split(index, X[i][index], X, Y, 
-				lambda, gamma, num_samples, num_features)
+	tree_index, tree_value, tree_score, tree_sample, tree_groups = Inf, Inf, -Inf, Inf, nothing
 
+	G = sum(Y)
+	H = num_samples
+	for index in 1:num_features
+		Gl = 0
+		Hl = 0
+		sorted_x_order = sort!([1:num_samples;], by=i->X[i, index])
+		X = X[sorted_x_order, :]
+		Y = Y[sorted_x_order, :]
+		for i in 1:num_samples
+			Gl += Y[i]
+			Hl += 1
+			Gr = G - Gl
+			Hr = H - Hl
+
+			score = (Gl * Gl) / max(1, (Hl + lambda)) + (Gr * Gr) / max(1, (Hr + lambda)) - (G*G)/(H + lambda) - gamma
 			if score > tree_score
-				tree_index, tree_value, tree_score, tree_groups = index, X[i][index], score, ((left, left_y), (right, right_y))
+				tree_score = score
+				tree_index = index
+				tree_value = X[i][index]
+				tree_sample = i
 			end
 		end
 	end
 
 	if tree_score <= 0
 		# Don't split i.e put all in the left tree
-		left = [left; right]
-		left_y = [left_y; right_y]
-
+		left = X
+		left_y = Y
 		#Dummy values. Should never branch to this!
 		right = zeros(Float64, (1, num_features))
 		right_y = zeros(Float64, 1)
 		return Dict("index"=>1, "value"=>Inf, "groups"=>((left, left_y), (right, right_y)))
 	else
+		sorted_x_order = sort!([1:num_samples;], by=i->X[i, tree_index])
+		X = X[sorted_x_order, :]
+		Y = Y[sorted_x_order, :]
+		left = X[1:tree_sample-1, :]
+		left_y = Y[1:tree_sample-1, :]
+		right = X[tree_sample:num_samples, :]
+		right_y = Y[tree_sample:num_samples, :]
+		tree_groups = ((left, left_y), (right, right_y))
 		return Dict("index"=>tree_index, "value"=>tree_value, "groups"=>tree_groups)
 	end
 end
@@ -86,7 +83,7 @@ end
 
 function to_terminal(group_y, learning_rate::Float64)
 	num_samples = size(group_y)[1]
-	mean = sum(group_y, 1)/num_samples
+	mean = sum(group_y, 1)/max(1, num_samples)
 	return mean * learning_rate
 end
 
