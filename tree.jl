@@ -4,7 +4,9 @@
 
 function get_split(X, Y, lambda, gamma)
 	num_samples, num_features = size(X)
-	tree_index, tree_value, tree_score, tree_sample, tree_groups = Inf, Inf, -Inf, Inf, nothing
+
+	#Default values!
+	tree_index, tree_value, tree_score, tree_sample, tree_groups = num_features, Inf, -Inf, num_samples, nothing
 
 	G = sum(Y)
 	H = num_samples
@@ -14,6 +16,7 @@ function get_split(X, Y, lambda, gamma)
 		sorted_x_order = sort!([1:num_samples;], by=i->X[i, index])
 		X = X[sorted_x_order, :]
 		Y = Y[sorted_x_order, :]
+
 		for i in 1:num_samples
 			Gl += Y[i]
 			Hl += 1
@@ -24,31 +27,21 @@ function get_split(X, Y, lambda, gamma)
 			if score > tree_score
 				tree_score = score
 				tree_index = index
-				tree_value = X[i][index]
+				tree_value = X[i, index]
 				tree_sample = i
 			end
 		end
 	end
 
-	if tree_score <= 0
-		# Don't split i.e put all in the left tree
-		left = X
-		left_y = Y
-		#Dummy values. Should never branch to this!
-		right = zeros(Float64, (1, num_features))
-		right_y = zeros(Float64, 1)
-		return Dict("index"=>1, "value"=>Inf, "groups"=>((left, left_y), (right, right_y)))
-	else
-		sorted_x_order = sort!([1:num_samples;], by=i->X[i, tree_index])
-		X = X[sorted_x_order, :]
-		Y = Y[sorted_x_order, :]
-		left = X[1:tree_sample-1, :]
-		left_y = Y[1:tree_sample-1, :]
-		right = X[tree_sample:num_samples, :]
-		right_y = Y[tree_sample:num_samples, :]
-		tree_groups = ((left, left_y), (right, right_y))
-		return Dict("index"=>tree_index, "value"=>tree_value, "groups"=>tree_groups)
-	end
+	sorted_x_order = sort!([1:num_samples;], by=i->X[i, tree_index])
+	X = X[sorted_x_order, :]
+	Y = Y[sorted_x_order, :]
+	left = X[1:tree_sample, :]
+	left_y = Y[1:tree_sample, :]
+	right = X[tree_sample+1:num_samples, :]
+	right_y = Y[tree_sample+1:num_samples, :]
+	tree_groups = ((left, left_y), (right, right_y))
+	return Dict("index"=>tree_index, "value"=>tree_value, "groups"=>tree_groups)
 end
 
 function split(node, max_depth::Int64, min_size::Int64, depth::Int64, 
@@ -87,27 +80,84 @@ function to_terminal(group_y, learning_rate::Float64)
 	return mean * learning_rate
 end
 
-function train(X, Y, max_depth::Int64, min_size::Int64, lambda::Float64, gamma::Float64, learning_rate::Float64=1)
+function train(X, Y, max_depth::Int64, min_size::Int64, lambda::Float64, gamma::Float64, learning_rate::Float64=1.0)
 	root = get_split(X, Y, lambda, gamma)
 	model = split(root, max_depth, min_size, 1, learning_rate, lambda, gamma)
 	return model
 end
 
-function predict(X, model)
+function predict(X, model, classification_flag=false)
 	num_samples, num_features = size(X)
 	Y = Array{Float64}(0)
+
+
+	# for i = 1: num_samples
+	# 	check_model = model
+	# 	while 1
+	# 		if X[i, check_model["index"]] < check_model["value"]
+	# 			if isa(check_model["left"], Dict)
+	# 				check_model = check_model["left"]
+	# 			else
+	# 				if classification_flag
+	# 					if check_model["left"][1] >= 0.5
+	# 						Y = [Y; 1]
+	# 					else
+	# 						Y = [Y; 0]
+	# 					end
+	# 				else
+	# 					Y = [Y; check_model["left"]]
+	# 				end
+	# 				break
+	# 			end
+	# 		else
+	# 			if isa(check_model["right"], Dict)
+	# 				check_model = check_model["right"]
+	# 			else
+	# 				if classification_flag
+	# 					if check_model["right"][1] >= 0.5
+	# 						Y = [Y; 1]
+	# 					else
+	# 						Y = [Y; 0]
+	# 					end
+	# 				else
+	# 					Y = [Y; check_model["right"]]
+	# 				end
+	# 				break
+	# 			end
+	# 		end
+	# 	end
+	# end
+
+
+
 	for i = 1: num_samples
 		if X[i, model["index"]] < model["value"]
 			if isa(model["left"], Dict)
 				Y = [Y; predict(X[i, :]', model["left"])]
 			else
-				Y = [Y; model["left"]]
+				if classification_flag
+					if model["left"][1] >= 0.5
+						Y = [Y; 1]
+					else
+						Y = [Y; 0]
+					end
+				else
+					Y = [Y; model["left"]]
+				end
 			end
 		else
 			if isa(model["right"], Dict)
 				Y = [Y; predict(X[i,:]', model["right"])]
 			else
-				Y = [Y; model["right"]]
+				if classification_flag
+					if model["right"][1] >= 0.5
+						Y = [Y; 1]
+					else
+						Y = [Y; 0]
+					end
+				else
+					Y = [Y; model["right"]]
+				end
 			end
 		end
 	end
