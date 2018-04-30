@@ -59,9 +59,14 @@ void test_regression_tree()
         err *= err;
         mse += err;
     }
-    //printf("MSE: %lf\n", mse/root->num_samples);
+    printf("MSE: %lf\n", mse/root->num_samples);
 #endif
     delete Y;
+    for (unsigned long i = 0; i < root->num_samples; i++, count += 0.1)
+    {
+        delete X[i];
+    }
+    delete X;
 }
 
 

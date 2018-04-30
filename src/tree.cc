@@ -3,6 +3,7 @@
 #include <vector>
 #include <algorithm>
 #include <limits>
+#include <iostream>
 
 // Should be parallelized
 double sum_Y(unsigned long num_features, double** X, unsigned long num)
@@ -55,17 +56,16 @@ void get_split(node_t* node, double lambda, double gamma)
         compare_feature = i;
         std::qsort(X, num_samples, sizeof(X[0]), compare);
 
-        // Maybe make Y a column of X only to avoid another sorting pass
         for (unsigned long j = 0; j < num_samples; j++)
         {
-            Gl += X[i][num_features];
+            Gl += X[j][num_features];
             Hl += 1;
             Gr = G - Gl;
             Hr = num_samples - Hl;
+
             score = (Gl * Gl)/ std::max((double)1, (Hl + lambda))
                   + (Gr * Gr)/ std::max((double)1, (Hr + lambda))
                   - (G * G) / (num_samples + lambda) - gamma;
-
 
             if (score > tree_score)
             {
@@ -163,50 +163,6 @@ void terminal(node_t* node, double learning_rate)
 void split(node_t* node, unsigned long max_depth, unsigned long min_size,
            unsigned long depth, double learning_rate, double lambda, double gamma)
 {
-#if 0
-    if (depth >= max_depth)
-    {
-        terminal(node->left, learning_rate);
-        terminal(node->right, learning_rate);
-
-        return;
-    }
-
-    if (node->left != nullptr)
-    {
-        if (node->left->num_samples <= min_size)
-        {
-            terminal(node->left, learning_rate);
-        }
-        else
-        {
-            get_split(node->left, lambda, gamma);
-            split(node->left, max_depth, min_size, depth + 1,
-                    learning_rate, lambda, gamma);
-        }
-    }
-
-    if (node->right != nullptr)
-    {
-        if (node->right->num_samples <= min_size)
-        {
-            terminal(node->right, learning_rate);
-        }
-        else
-        {
-            get_split(node->right, lambda, gamma);
-            split(node->right, max_depth, min_size, depth + 1,
-                    learning_rate, lambda, gamma);
-        }
-    }
-#else
-    /* if (depth >= max_depth)
-    {
-        terminal(node, learning_rate);
-
-        return;
-    }
-    */
     if (node->left == nullptr && node->right == nullptr)
     {
         terminal(node, learning_rate);
@@ -238,7 +194,6 @@ void split(node_t* node, unsigned long max_depth, unsigned long min_size,
                     learning_rate, lambda, gamma);
         }
     }
-#endif
 }
 
 void train (node_t* root, unsigned long max_depth, unsigned long min_size,
