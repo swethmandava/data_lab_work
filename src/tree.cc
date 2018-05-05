@@ -24,9 +24,11 @@ int compare(const void *aa, const void *bb)
     double *a = (double *)aa;
     double *b = (double *)bb;
 
-    if (a[compare_feature] < b[compare_feature])
+    double a_num = a[compare_feature];
+    double b_num = b[compare_feature];
+    if (a_num < b_num)
         return -1;
-    else if (a[compare_feature] == b[compare_feature])
+    else if (a_num == b_num)
         return 0;
     else
         return 1;
@@ -83,53 +85,17 @@ void get_split(node_t* node, double lambda, double gamma)
 
         node->right = nullptr;
 
-        //node->feature = tree_feature;
-        //node->value = tree_value;
     }
     else
     {
         compare_feature = tree_feature;
         std::qsort(X, num_samples, sizeof(X[0]), compare);
 
-#if 0
         node->left = new node_t;
-        node->left->X = new double*[tree_sample];
-        for (unsigned long i = 0; i < tree_sample; i++)
-        {
-            node->left->X[i] = new double[num_features + 1];
-            memcpy(node->left->X[i], X[i], sizeof(double) * (num_features
-                        + 1));
-        }
+        node->left->X = X;
 
         node->right = new node_t;
-        node->right->X = new double*[num_samples - tree_sample];
-        X = X + (tree_sample);
-        for (unsigned long i = 0; i < num_samples - tree_sample; i++)
-        {
-            node->right->X[i] = new double[num_features + 1];
-            memcpy(node->left->X[i], X[i], sizeof(double) * (num_features
-                        + 1));
-        }
-
-        node->left->num_samples = tree_sample;
-        node->right->num_samples = num_samples - tree_sample;
-        node->left->num_features = num_features;
-        node->right->num_features = num_features;
-        node->feature = tree_feature;
-        node->value = tree_value;
-
-        for (unsigned long i = 0; i < num_samples; i++)
-        {
-            delete node->X[i];
-        }
-
-        delete node->X;
-#endif
-        node->left = new node_t;
-        node->left->X = node->X;
-
-        node->right = new node_t;
-        node->right->X = node->X + tree_sample;
+        node->right->X = X + tree_sample;
 
         node->left->num_samples = tree_sample;
         node->right->num_samples = num_samples - tree_sample;
@@ -143,16 +109,18 @@ void get_split(node_t* node, double lambda, double gamma)
 
 void terminal(node_t* node, double learning_rate)
 {
+    unsigned long num_samples = node->num_samples;
+    double** X = node->X;
     if (node != nullptr)
     {
-        unsigned long div = std::max((unsigned long)1, node->num_samples);
-        double sum = sum_Y(node->num_features, node->X, node->num_samples);
+        unsigned long div = std::max((unsigned long)1, num_samples);
+        double sum = sum_Y(node->num_features, X, num_samples);
 
         node->value = (sum / div) * learning_rate;
 
-        for (unsigned long i = 0; i < node->num_samples; i++)
+        for (unsigned long i = 0; i < num_samples; i++)
         {
-            delete node->X[i];
+            delete X[i];
         }
 
         node->left = nullptr;
@@ -212,7 +180,7 @@ double* predict(unsigned long num_samples, double** X, node_t* model, bool
     for (unsigned long i = 0; i < num_samples; i++)
     {
         node = model;
-        while (1)
+        while (node)
         {
             if (node->left == nullptr && node->right == nullptr)
             {

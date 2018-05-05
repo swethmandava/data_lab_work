@@ -16,7 +16,7 @@ _DEPS = $(CFILES:.cc=.hh)
 COBJECTS = $(patsubst $(SRCDIR)%.o,$(OBJDIR)%.o,$(_COBJECTS))
 DEPS = $(patsubst $(SRCDIR)%.hh,$(INCDIR)%.hh,$(_DEPS))
 
-CFLAGS = -g -std=c++11
+CFLAGS = -O3 -std=c++11
 INCLUDES = -I$(INCDIR)
 
 default: all
