@@ -8,7 +8,7 @@ Pkg.add("DataFrames")
 using DataFrames;
 push!(LOAD_PATH, pwd())
 include("tree.jl")
-include("gradient_boosting.jl")
+# include("gradient_boosting.jl")
 
 function print_tree(node, depth=0)
 	if isa(node, Dict)
@@ -39,7 +39,6 @@ function test_regression_tree()
 	# print_tree(model)
 
 	y_test = predict(x_train, model)
-	# show(y_test)
 
 	err = y_test - y_train
 	err = sum(err.^2)/n
@@ -49,28 +48,28 @@ function test_regression_tree()
 	# plt[:show]()
 end
 
-function test_gradient_boosting(filename, num_train_samples)
+# function test_gradient_boosting(filename, num_train_samples)
 
-	max_depth = 12
-	min_size = 2
-	epochs = 10
-	learning_rate = 1.0
-	batch_size = Int(0.3 * num_train_samples)
-	lambda = 0.01
-	gamma = 0.01
+# 	max_depth = 12
+# 	min_size = 2
+# 	epochs = 10
+# 	learning_rate = 1.0
+# 	batch_size = Int(0.3 * num_train_samples)
+# 	lambda = 0.01
+# 	gamma = 0.01
 
-	model = gradient_boosting(filename, num_train_samples, epochs, learning_rate, batch_size,
-	max_depth, min_size, lambda, gamma)
+# 	model = gradient_boosting(filename, num_train_samples, epochs, learning_rate, batch_size,
+# 	max_depth, min_size, lambda, gamma)
 
-	test = readtable(filename, skipstart=num_train_samples, nrows=Int(0.25*num_train_samples))
-	num_cols = size(test)[2]
-	y_test = Array(test[:, 1:1])
-	x_test = Array(test[:,2:num_cols])	
-	y_pred = predict_gboost(x_test, model)
-	num_correct = count(i->y_test[i] == y_pred[i], [1:size(y_test)[1];])
-	show("Accuracy = ")
-	show((num_correct * 1.0)/size(y_test)[1])
-end
+# 	test = readtable(filename, skipstart=num_train_samples, nrows=Int(0.25*num_train_samples))
+# 	num_cols = size(test)[2]
+# 	y_test = Array(test[:, 1:1])
+# 	x_test = Array(test[:,2:num_cols])	
+# 	y_pred = predict_gboost(x_test, model)
+# 	num_correct = count(i->y_test[i] == y_pred[i], [1:size(y_test)[1];])
+# 	show("Accuracy = ")
+# 	show((num_correct * 1.0)/size(y_test)[1])
+# end
 
 # file = "Dataset/HIGGS.csv"
 # data = readtable(file)
