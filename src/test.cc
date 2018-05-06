@@ -25,17 +25,18 @@ void test_regression_tree()
     node_t* root = new node_t;
     root->num_samples = 1000;
     root->num_features = 1;
-    root->X = new double*[root->num_samples];
-    double** X = new double*[root->num_samples];
+    unsigned long num_samples = root->num_samples;
+    unsigned long num_features = root->num_features;
+    unsigned long cols = num_features + 1;
+    root->X = new double[num_samples * cols];
+    double* X = new double[num_samples * cols];
     double count = 0;
     for (unsigned long i = 0; i < root->num_samples; i++, count += 0.1)
     {
-        root->X[i] = new double[root->num_features + 1];
-        root->X[i][0] = count;
-        root->X[i][1] = std::sin(count);
-        X[i] = new double[root->num_features + 1];
-        X[i][0] = count;
-        X[i][1] = std::sin(count);
+        root->X[i * cols + 0] = count;
+        root->X[i * cols + 1] = std::sin(count);
+        X[i * cols + 0] = count;
+        X[i * cols + 1] = std::sin(count);
     }
 
     unsigned long max_depth = 20;
@@ -44,30 +45,25 @@ void test_regression_tree()
     double gamma = 0.01;
     double learning_rate = 1;
 
-    train(root, max_depth, min_size, lambda, gamma, learning_rate);
+    train(root, max_depth, min_size, lambda, gamma, learning_rate, cols);
     int depth = 0;
     //print_tree(root, depth);
 
-    double *Y = predict(root->num_samples, X, root, false);
+    double *Y = predict(num_samples, X, root, false, cols);
 
 #if 1
     count = 0;
     double mse = 0;
     double err;
-    for (unsigned long i = 0; i < root->num_samples; i++)
+    for (unsigned long i = 0; i < num_samples; i++)
     {
-        //printf("%lf, %lf\n", X[i][0], Y[i]);
-        err = (X[i][1] - Y[i]);
+        err = (X[i * cols + 1] - Y[i]);
         err *= err;
         mse += err;
     }
-    printf("MSE: %lf\n", mse/root->num_samples);
+    printf("MSE: %lf\n", mse/num_samples);
 #endif
     delete Y;
-    for (unsigned long i = 0; i < root->num_samples; i++, count += 0.1)
-    {
-        delete X[i];
-    }
     delete X;
 }
 
@@ -83,11 +79,13 @@ void test_gradient_boosting()
     char* filename = "HIGGS.csv";
     unsigned long num_samples = (unsigned long) (0.7 * 11000000);
     unsigned long num_features = 28;
+    unsigned long cols = num_features + 1;
 
     unsigned long batch_size = (unsigned long)(0.3 * num_samples);
     node_t** model = gradient_boosting(filename, num_samples, epochs,
                                     learning_rate, max_depth, min_size,
-                                    lambda, gamma, batch_size, num_features);
+                                    lambda, gamma, batch_size, num_features,
+                                    cols);
 
     node_t* root = new node_t;
     root->num_samples = (unsigned long) (0.3 * num_samples);
@@ -95,14 +93,14 @@ void test_gradient_boosting()
     std::ifstream f;
     f.open(filename);
 
-    readcsv(f, num_samples, root);
-    double* Y_predict = predict_gboost(root, model, epochs);
+    readcsv(f, num_samples, root, cols);
+    double* Y_predict = predict_gboost(root, model, epochs, cols);
 
     unsigned long num_correct = 0;
 
     for (unsigned long i = 0; i < root->num_samples; i++)
     {
-        if (root->X[i][root->num_features] == Y_predict[i])
+        if (root->X[i * cols + root->num_features] == Y_predict[i])
             num_correct++;
     }
 
@@ -122,5 +120,6 @@ int main()
 	std::chrono::duration<double> elapsed_seconds = end-start;
 
 	std::cout << "elapsed time: " << elapsed_seconds.count() << "s\n";
+
     return 0;
 }
