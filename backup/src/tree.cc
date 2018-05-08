@@ -45,7 +45,7 @@ void get_split(node_t* node, double lambda, double gamma, unsigned long cols)
     unsigned long num_samples = node->num_samples;
     unsigned long num_features = node->num_features;
     unsigned long tree_sample = num_samples;
-    double *X = node->X;
+    double *X = node->X + (node->X_index * cols);
     double G = sum_Y(num_features, X, num_samples, cols);
 
     for (unsigned long i = 0; i < num_features; i++)
@@ -93,10 +93,12 @@ void get_split(node_t* node, double lambda, double gamma, unsigned long cols)
         std::qsort(X, num_samples, sizeof(double) * cols, compare);
 
         node->left = new node_t;
-        node->left->X = X;
+        node->left->X = node->X;
+        node->left->X_index = node->X_index;
 
         node->right = new node_t;
-        node->right->X = X + (tree_sample * cols);
+        node->right->X = node->X;
+        node->right->X_index = node->X_index + tree_sample;
 
         node->left->num_samples = tree_sample;
         node->right->num_samples = num_samples - tree_sample;
@@ -111,7 +113,7 @@ void get_split(node_t* node, double lambda, double gamma, unsigned long cols)
 void terminal(node_t* node, double learning_rate, unsigned long cols)
 {
     unsigned long num_samples = node->num_samples;
-    double* X = node->X;
+    double* X = node->X + (node->X_index * cols);
     if (node != nullptr)
     {
         unsigned long div = std::max((unsigned long)1, num_samples);

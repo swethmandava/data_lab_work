@@ -23,13 +23,15 @@ void print_tree(node_t* root, int depth)
 void test_regression_tree()
 {
     node_t* root = new node_t;
-    root->num_samples = 1000;
+    root->num_samples = 10000000;
     root->num_features = 1;
     unsigned long num_samples = root->num_samples;
     unsigned long num_features = root->num_features;
     unsigned long cols = num_features + 1;
     root->X = new double[num_samples * cols];
+    root->X_index = 0;
     double* X = new double[num_samples * cols];
+
     double count = 0;
     for (unsigned long i = 0; i < root->num_samples; i++, count += 0.1)
     {
@@ -114,8 +116,8 @@ void test_gradient_boosting()
 int main()
 {
 	auto start = std::chrono::system_clock::now();
-    //test_regression_tree();
-    test_gradient_boosting();
+    test_regression_tree();
+    //test_gradient_boosting();
     auto end = std::chrono::system_clock::now();
 	std::chrono::duration<double> elapsed_seconds = end-start;
 
