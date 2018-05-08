@@ -1,0 +1,18 @@
+Input: I, instance set of current node
+Input: d, feature dimension
+
+For each node
+	G = sum(gi) , H = sum(hi)
+	For i = 1 to num_features do
+		GL = 0, HL = 0
+		For j in sorted(I by features i) do
+			GL = GL + gj 
+			HL = HL + hj
+			GR = G - GL
+			HR = H - HL
+			score_j = compute_score(GL, HL, GR, HR, G, H)
+			score = max(score, score_j)
+		End
+	End
+	Further Split node on max Score
+End

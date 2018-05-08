@@ -1,0 +1,12 @@
+Input: I, instance set of current node
+Input: d, feature dimension
+
+G = segmented_reduce(gi) , H = segmented_reduce(hi)
+For i = 1 to num_features do
+	GL = inclusive_segmented_scan(gj, segmented_sorted(I by features i))
+	HL = inclusive_segmented_scan(hj, segmented_sorted(I by features i))
+	score_j = kernel_compute_score(GL, HL, G, H)
+	score = segmented_reduce(score_j)
+End
+max_score = all_reduce each scores
+Further Split Nodes using max Score from each segment
